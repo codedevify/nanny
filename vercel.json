@@ -8,11 +8,23 @@
   ],
   "routes": [
     {
-      "src": "/(.*\\.(css|js|png|jpg|svg))",
+      "src": "/(.*\\.(css|js|png|jpg|svg|ico))",
       "dest": "/public/$1"
     },
     {
       "src": "/admin",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/success",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/cancel",
       "dest": "/server.js"
     },
     {
