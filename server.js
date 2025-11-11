@@ -63,49 +63,62 @@ function updateTransporter() {
   }
 }
 
+// ADMIN PROTECTION MIDDLEWARE
+const requireAdmin = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (auth === `Bearer ${process.env.ADMIN_PASSWORD}`) {
+    next();
+  } else {
+    res.status(401).send('Unauthorized');
+  }
+};
+
 // Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/blog', (req, res) => res.sendFile(path.join(__dirname, 'public', 'blog.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
-// API: Blogs
-app.get('/api/blogs', async (req, res) => {
+// ADMIN LOGIN PAGE
+app.get('/admin', (req, res) => {
+  const auth = req.headers.authorization;
+  if (auth === `Bearer ${process.env.ADMIN_PASSWORD}`) {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  } else {
+    res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
+  }
+});
+
+// API: Blogs (Protected)
+app.get('/api/blogs', requireAdmin, async (req, res) => {
   const blogs = await Blog.find().sort({ createdAt: -1 });
   res.json(blogs);
 });
 
-app.post('/api/blogs', async (req, res) => {
-  const { title, content, password } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) return res.status(403).json({ error: 'Unauthorized' });
+app.post('/api/blogs', requireAdmin, async (req, res) => {
+  const { title, content } = req.body;
   const blog = new Blog({ title, content });
   await blog.save();
   res.json(blog);
 });
 
-app.delete('/api/blogs/:id', async (req, res) => {
-  const { password } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) return res.status(403).json({ error: 'Unauthorized' });
+app.delete('/api/blogs/:id', requireAdmin, async (req, res) => {
   await Blog.findByIdAndDelete(req.params.id);
   res.json({ success: true });
 });
 
-// API: Bookings
-app.get('/api/bookings', async (req, res) => {
+// API: Bookings (Protected)
+app.get('/api/bookings', requireAdmin, async (req, res) => {
   const bookings = await Booking.find().sort({ createdAt: -1 });
   res.json(bookings);
 });
 
-app.delete('/api/bookings/:id', async (req, res) => {
-  const { password } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) return res.status(403).json({ error: 'Unauthorized' });
+app.delete('/api/bookings/:id', requireAdmin, async (req, res) => {
   await Booking.findByIdAndDelete(req.params.id);
   res.json({ success: true });
 });
 
-// API: Config
-app.post('/api/admin/config', async (req, res) => {
-  const { password, paypalClientId, paypalSecret, stripeSecretKey, stripePublishableKey, adminEmail, gmailUser, gmailAppPass } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) return res.status(403).json({ error: 'Unauthorized' });
+// API: Config (Protected)
+app.post('/api/admin/config', requireAdmin, async (req, res) => {
+  const { paypalClientId, paypalSecret, stripeSecretKey, stripePublishableKey, adminEmail, gmailUser, gmailAppPass } = req.body;
 
   await AdminConfig.deleteMany({});
   const config = new AdminConfig({ paypalClientId, paypalSecret, stripeSecretKey, stripePublishableKey, adminEmail, gmailUser, gmailAppPass });
@@ -119,7 +132,7 @@ app.post('/api/admin/config', async (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/admin/config', async (req, res) => {
+app.get('/api/admin/config', requireAdmin, async (req, res) => {
   res.json(adminConfig);
 });
 
@@ -234,4 +247,4 @@ async function sendEmails(booking) {
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
