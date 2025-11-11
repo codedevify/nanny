@@ -56,6 +56,9 @@
   </div>
 
   <script>
+    if (localStorage.getItem('adminAuth') !== 'admin123') {
+    window.location.href = '/admin';
+  }
     async function login() {
       if (document.getElementById('password').value === 'admin123') {
         document.getElementById('login').classList.add('hidden');
