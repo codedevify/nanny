@@ -8,9 +8,16 @@
   ],
   "routes": [
     {
+      "src": "/(.*\\.(css|js|png|jpg|svg))",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/admin",
+      "dest": "/server.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/server.js"
     }
-  ],
-  "outputDirectory": "public"
+  ]
 }
